@@ -124,7 +124,7 @@ class Api:
             return False
 
     def open_config_editor(self, app_name):
-        html = os.path.join(BASE_DIR, 'editor.html')
+        html = os.path.join(APP_BASE_DIR, 'editor.html')
         w = webview.create_window(f'{app_name} - Config Editor', url=html, width=700, height=500, js_api=self)
 
         def on_loaded():
