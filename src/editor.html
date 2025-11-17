@@ -1,43 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Config Editor</title>
     <style>
         :root {
-            --bg-color: #2a2a34; --surface-color: #3c3c48; --text-color: #d8d8d8;
-            --border-color: #5a5a64; --accent-color: #ff004d; --accent-hover-color: #ff4d8a;
+            --bg-color: #2a2a34;
+            --surface-color: #3c3c48;
+            --text-color: #d8d8d8;
+            --border-color: #5a5a64;
+            --accent-color: #ff004d;
+            --accent-hover-color: #ff4d8a;
         }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: var(--bg-color); color: var(--text-color); font-family: 'Source Sans Pro', sans-serif; display: flex; flex-direction: column; }
-        #form-container { padding: 20px 30px; overflow-y: auto; flex-grow: 1; }
-        #form-container::-webkit-scrollbar { width: 12px; }
-        #form-container::-webkit-scrollbar-track { background: var(--bg-color); }
-        #form-container::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 6px; border: 3px solid var(--bg-color); }
-        .setting-group { margin-bottom: 18px; display: flex; flex-wrap: wrap; align-items: center; }
-        .setting-group .label-container { flex-basis: 220px; flex-shrink: 0; padding-right: 15px; }
-        .setting-group .label-wrapper { display: flex; align-items: center; }
-        .setting-group label { font-weight: bold; font-size: 14px; }
-        .setting-group .description { font-size: 12px; color: #999; font-weight: normal; margin-top: 4px; }
-        .setting-group .input-container { flex-grow: 1; display: flex; align-items: center; }
-        .setting-group input[type="text"] { width: 100%; box-sizing: border-box; background-color: var(--surface-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px; font-family: Consolas, monospace; font-size: 14px; border-radius: 3px; }
-        h2 { color: var(--accent-color); font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; }
-        .tooltip { position: relative; display: inline-block; margin-left: 8px; background-color: var(--border-color); color: white; border-radius: 50%; width: 18px; height: 18px; text-align: center; line-height: 18px; font-size: 12px; cursor: help; }
-        .tooltip .tooltiptext { visibility: hidden; width: max-content; max-width: 300px; background-color: #111; color: #fff; text-align: center; border-radius: 6px; padding: 8px 12px; position: absolute; z-index: 1; bottom: 150%; left: 50%; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s; }
-        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
-        .button-bar { display: flex; }
-        .button-bar button { flex-grow: 1; padding: 15px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
-        button#save-btn { background-color: var(--accent-color); color: white; }
-        button#save-btn:hover { background-color: var(--accent-hover-color); }
-        button.secondary-btn { background-color: var(--border-color); color: var(--text-color); }
-        button.secondary-btn:hover { background-color: #7a7a84; }
-        button:disabled { background-color: #555; cursor: not-allowed; }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Source Sans Pro', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #form-container {
+            padding: 20px 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        #form-container::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        #form-container::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        #form-container::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 6px;
+            border: 3px solid var(--bg-color);
+        }
+
+        .setting-group {
+            margin-bottom: 22px;
+            padding: 15px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .label-container {
+            flex-basis: 240px;
+            flex-shrink: 0;
+            padding-right: 20px;
+        }
+
+        .label-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .setting-group label {
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .description {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 6px;
+        }
+
+        .input-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        h2 {
+            color: var(--accent-color);
+            font-size: 18px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            background-color: var(--border-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            text-align: center;
+            line-height: 18px;
+            font-size: 12px;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            max-width: 300px;
+            background-color: #111;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: 150%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .button-bar {
+            display: flex;
+        }
+
+        .button-bar button {
+            flex-grow: 1;
+            padding: 15px;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color .2s;
+        }
+
+        #save-btn {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        #save-btn:hover {
+            background-color: var(--accent-hover-color);
+        }
+
+        .secondary-btn {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+
+        .secondary-btn:hover {
+            background-color: #7a7a84;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
     </style>
 </head>
+
 <body>
     <div id="form-container"></div>
+
     <div class="button-bar">
         <button id="save-btn">Save</button>
-        <button id="open-folder-btn" class="secondary-btn">User Data</button>
+        <button id="open-folder-btn" class="secondary-btn">Open Folder</button>
         <button id="reset-btn" class="secondary-btn">Reset to Default</button>
     </div>
 
@@ -50,82 +201,94 @@
             if (!window.currentApp) return;
             const content = await pywebview.api.read_config_file(window.currentApp);
             originalLines = content.split(/\r?\n/);
-            
             let lastComment = null;
-            originalLines.forEach((line, index) => {
-                const trimmedLine = line.trim();
-                if (trimmedLine.startsWith('// ::')) {
-                    const el = document.createElement('h2');
-                    el.textContent = trimmedLine.substring(5).trim();
-                    formContainer.appendChild(el);
-                    lastComment = null;
-                } else if (trimmedLine.startsWith('//')) {
-                    lastComment = trimmedLine.substring(2).trim();
-                } else if (trimmedLine) {
-                    const [key, ...valueParts] = trimmedLine.split(/\s+/);
-                    const commentMatch = line.match(/\/\/(.*)/);
-                    const tooltipText = commentMatch ? commentMatch[1].trim() : null;
-                    const value = tooltipText ? valueParts.slice(0, valueParts.indexOf('//')).join(' ') : valueParts.join(' ');
-                    
-                    const group = document.createElement('div');
-                    group.className = 'setting-group';
-                    const descriptionHtml = lastComment ? `<div class="description">${lastComment}</div>` : '';
-                    const tooltipHtml = tooltipText ? `<div class="tooltip">? <span class="tooltiptext">${tooltipText}</span></div>` : '';
 
-                    const inputHtml = `
-                        <div class="label-container">
-                            <div class="label-wrapper">
-                                <label for="input-${key}">${key}</label>
-                                ${tooltipHtml}
-                            </div>
-                            ${descriptionHtml}
-                        </div>
-                        <div class="input-container">
-                            <input type="text" id="input-${key}" data-key="${key}" data-original-line="${index}" value="${value}">
-                        </div>
-                    `;
-                    group.innerHTML = inputHtml;
-                    formContainer.appendChild(group);
+            originalLines.forEach((line, index) => {
+                const t = line.trim();
+
+                if (t.startsWith('// ::')) {
+                    const h = document.createElement('h2');
+                    h.textContent = t.substring(5).trim();
+                    formContainer.appendChild(h);
                     lastComment = null;
-                } else {
-                    lastComment = null;
+                    return;
                 }
+
+                if (t.startsWith('//')) {
+                    lastComment = t.substring(2).trim();
+                    return;
+                }
+
+                if (!t) {
+                    lastComment = null;
+                    return;
+                }
+
+                const parts = t.split(/\s+/);
+                const key = parts[0];
+                const commentMatch = line.match(/\/\/(.*)/);
+                const tooltipText = commentMatch ? commentMatch[1].trim() : null;
+
+                let valueParts = t.split(/\s+/);
+                if (tooltipText) valueParts = valueParts.slice(0, valueParts.indexOf('//'));
+                const value = tooltipText ? valueParts.slice(1).join(' ') : parts.slice(1).join(' ');
+
+                const group = document.createElement('div');
+                group.className = 'setting-group';
+
+                const descriptionHtml = lastComment ? `<div class="description">${lastComment}</div>` : '';
+                const tooltipHtml = tooltipText ? `<div class="tooltip">?<span class="tooltiptext">${tooltipText}</span></div>` : '';
+
+                group.innerHTML =
+                    `<div class="label-container">
+                        <div class="label-wrapper">
+                            <label for="input-${key}">${key}</label>
+                            ${tooltipHtml}
+                        </div>
+                        ${descriptionHtml}
+                    </div>
+                    <div class="input-container">
+                    <input id="input-${key}" data-key="${key}" data-original-line="${index}" value="${value}">
+                </div>`;
+
+                formContainer.appendChild(group);
+                lastComment = null;
             });
         }
 
         document.getElementById('save-btn').addEventListener('click', async () => {
-            const button = document.getElementById('save-btn');
+            const btn = document.getElementById('save-btn');
             if (!window.currentApp) return;
-            button.disabled = true;
-            button.textContent = 'Saving...';
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
             const newLines = [...originalLines];
+
             document.querySelectorAll('[data-original-line]').forEach(input => {
-                const lineIndex = parseInt(input.dataset.originalLine, 10);
+                const i = parseInt(input.dataset.originalLine, 10);
                 const key = input.dataset.key;
                 const value = input.value;
-                const commentMatch = originalLines[lineIndex].match(/\s+\/\/(.*)/);
+                const commentMatch = originalLines[i].match(/\s+\/\/(.*)/);
                 const comment = commentMatch ? `//${commentMatch[1]}` : '';
-                newLines[lineIndex] = `${key} ${value} ${comment}`.trim();
+                newLines[i] = `${key} ${value} ${comment}`.trim();
             });
-            const newContent = newLines.join('\n');
-            const success = await pywebview.api.save_config_file(window.currentApp, newContent);
-            button.textContent = success ? 'Saved!' : 'Save Failed';
-            button.disabled = false;
-            setTimeout(() => { button.textContent = 'Save'; }, 2000);
+
+            const success = await pywebview.api.save_config_file(window.currentApp, newLines.join('\n'));
+            btn.textContent = success ? 'Saved!' : 'Save Failed';
+            btn.disabled = false;
+
+            setTimeout(() => btn.textContent = 'Save', 2000);
         });
-        
+
         document.getElementById('open-folder-btn').addEventListener('click', () => {
-            if (window.currentApp) {
-                pywebview.api.open_user_data_folder(window.currentApp);
-            }
+            if (window.currentApp) pywebview.api.open_user_data_folder(window.currentApp);
         });
 
         document.getElementById('reset-btn').addEventListener('click', async () => {
-            if (window.currentApp && confirm('Are you sure? This will delete the config file and close the editor.')) {
-                const success = await pywebview.api.reset_config_file(window.currentApp);
-                if (success) { window.close(); } 
-                else { alert('Failed to reset config file.'); }
-            }
+            if (!window.currentApp) return;
+            if (!confirm('Are you sure?')) return;
+            const ok = await pywebview.api.reset_config_file(window.currentApp);
+            alert(ok ? 'Settings reset' : 'Failed to reset config file.');
         });
     </script>
 </body>
