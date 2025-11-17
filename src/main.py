@@ -13,13 +13,23 @@ import time
 import shutil
 import webbrowser
 from distutils.version import LooseVersion
-XOR_KEY = 'a9b8c7d6e5f4' # This is changed for builds
+import uuid
+import hashlib
+
+# Generate XOR key based on hardware ID
+# To lock user login data per-device
+hw = str(uuid.getnode()).encode()
+XOR_KEY = hashlib.sha256(hw).hexdigest()[:12]
+
+storage_path = os.path.join(os.path.join(os.path.expanduser("~"), "Documents"), 'LexaloffleLauncher')
+if not os.path.isdir(storage_path):
+    os.makedirs(storage_path)
 
 if getattr(sys, 'frozen', False):
-    BASE_DIR = os.path.dirname(sys.executable)
+    APP_BASE_DIR = os.path.dirname(sys.executable)
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+    APP_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = storage_path
 
 def encode_data(data_dict):
     if not data_dict:
@@ -79,8 +89,8 @@ class Api:
         app_dir = os.path.join(BASE_DIR, 'apps', app_folder_name)
 
         def on_fail():
-            if 'pico-8' in app_name.lower():
-                self.open_in_browser('https://www.pico-8-edu.com/')
+            # if 'pico-8' in app_name.lower():
+            #     self.open_in_browser('https://www.pico-8-edu.com/')
             return False
 
         if not os.path.isdir(app_dir):
@@ -189,7 +199,7 @@ def process_downloads_page(html_content, main_window):
                     })
 
         if apps_data:
-            main_window.evaluate_js(f'ensureAppCards({json.dumps(apps_data)})')
+            main_window.evaluate_js(f'appCardHandlerThingy({json.dumps(apps_data)})')
 
         for app in updates:
             resp = requests.get(app['url'])
@@ -287,7 +297,6 @@ def run_update_check_in_background(main_window):
 
 api = Api()
 
-storage_path = os.path.join(os.getenv('APPDATA'), 'LexaloffleLauncher')
 os.makedirs(storage_path, exist_ok=True)
 
 window = webview.create_window(
@@ -300,7 +309,7 @@ window = webview.create_window(
 
 
 def on_loaded():
-    script = os.path.join(BASE_DIR, 'script.js')
+    script = os.path.join(APP_BASE_DIR, 'script.js')
     try:
         with open(script, 'r', encoding='utf-8') as f:
             window.evaluate_js(f.read())
@@ -319,4 +328,4 @@ threading.Timer(
     ).start()
 ).start()
 
-webview.start(debug=False, storage_path=storage_path, gui='edgechromium')
+webview.start(debug=False, gui='edgechromium')

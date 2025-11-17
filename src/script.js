@@ -36,7 +36,7 @@
             const cachedApps = loadWithExpiry('cachedAppsData');
             const cachedConfigs = loadWithExpiry('appsWithConfigs');
 
-            if (cachedApps) ensureAppCards(cachedApps);
+            if (cachedApps) appCardHandlerThingy(cachedApps);
             if (cachedConfigs) addConfigButtons(cachedConfigs);
         } catch (e) {
             localStorage.clear();
@@ -135,6 +135,9 @@
         });
     }
 
+    // Humble Bundle iframes become browser links so you don't need
+    // to re-enter payment info every time, and so I don't need
+    // to implement a system for saving payment info
     function handleHumbleIframes() {
         document.querySelectorAll('iframe[src*="humblebundle.com"]').forEach(iframe => {
             if (iframe.dataset.humbleProcessed) return;
@@ -151,6 +154,8 @@
         });
     }
 
+    // Fix downloads by opening them in the system browser
+    // so I don't need to handle it
     function interceptDownloadLinks() {
         document.body.addEventListener(
             'click',
@@ -502,7 +507,7 @@
         });
     }
 
-    window.ensureAppCards = function(appsData) {
+    window.appCardHandlerThingy = function(appsData) {
         if (window.location.pathname !== '/') return;
 
         saveWithExpiry('cachedAppsData', appsData, 3);
