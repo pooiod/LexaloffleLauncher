@@ -1,6 +1,31 @@
 (function() {
     'use strict';
 
+    window.showSpinner = function() {
+        let overlay = document.getElementById('update-spinner-overlay');
+
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'update-spinner-overlay';
+
+            overlay.innerHTML = `
+                <div class="spinner"></div>
+                <p>Checking for updates...</p>
+            `;
+
+            document.body.appendChild(overlay);
+        }
+
+        overlay.querySelector('p').textContent = 'Checking for updates...';
+        overlay.style.display = 'flex';
+
+        setTimeout(() => {
+            if (overlay && overlay.querySelector('p')) {
+                overlay.querySelector('p').textContent = 'Downloading updates...';
+            }
+        }, 4000);
+    };
+
     if (window.lexaloffleCustomizerInitialized) {
         runAllLogic();
         return;
@@ -9,7 +34,6 @@
     window.lexaloffleCustomizerInitialized = true;
 
     const STYLE_ID = 'lexaloffle-custom-styles';
-    const LOGGED_OUT_FORM_SELECTOR = '#account_pulldown_inner > div > form';
     const LOGGED_IN_FORM_SELECTOR = '#account_pulldown_inner > form';
 
     function saveWithExpiry(key, value, days) {
@@ -76,68 +100,21 @@
         handleHumbleIframes();
         interceptDownloadLinks();
 
-        const loggedOutForm = document.querySelector(LOGGED_OUT_FORM_SELECTOR);
         const loggedInForm = document.querySelector(LOGGED_IN_FORM_SELECTOR);
 
         if (loggedInForm) {
             injectAppButtons();
-            handleLogoutButton(loggedInForm);
+            const logoutButton = loggedInForm.querySelector('input.logininput2');
+            if (logoutButton && !logoutButton.dataset.logoutListenerAdded) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.clear();
+                });
+                logoutButton.dataset.logoutListenerAdded = 'true';
+            }
             if (!loadWithExpiry('appsWithConfigs')) checkForConfigs();
-        } else if (loggedOutForm) {
-            handleLoginForm(loggedOutForm);
         }
     }
 
-    async function handleLoginForm(form) {
-        if (window.location.href.includes('account.php?page=login_failed')) {
-            setupDataSaving(form);
-            return;
-        }
-
-        const savedData = await pywebview.api.load_form_data();
-
-        if (savedData) {
-            let populated = false;
-
-            for (const key in savedData) {
-                if (form.elements[key]) {
-                    form.elements[key].value = savedData[key];
-                    populated = true;
-                }
-            }
-
-            if (populated) {
-                form.submit();
-                return;
-            }
-        }
-
-        setupDataSaving(form);
-    }
-
-    function handleLogoutButton(form) {
-        const logoutButton = form.querySelector('input.logininput2');
-
-        if (logoutButton && !logoutButton.dataset.logoutListenerAdded) {
-            logoutButton.addEventListener('click', () => {
-                localStorage.clear();
-                pywebview.api.delete_credentials();
-            });
-
-            logoutButton.dataset.logoutListenerAdded = 'true';
-        }
-    }
-
-    function setupDataSaving(form) {
-        form.addEventListener('input', () => {
-            const formData = new FormData(form);
-            pywebview.api.save_form_data(Object.fromEntries(formData.entries()));
-        });
-    }
-
-    // Humble Bundle iframes become browser links so you don't need
-    // to re-enter payment info every time, and so I don't need
-    // to implement a system for saving payment info
     function handleHumbleIframes() {
         document.querySelectorAll('iframe[src*="humblebundle.com"]').forEach(iframe => {
             if (iframe.dataset.humbleProcessed) return;
@@ -154,8 +131,6 @@
         });
     }
 
-    // Fix downloads by opening them in the system browser
-    // so I don't need to handle it
     function interceptDownloadLinks() {
         document.body.addEventListener(
             'click',
@@ -188,6 +163,9 @@
         let layoutStyles = `
             .topmenu_div#m {
                 background: #202020 !important;
+            }
+            a[href="/games.php?page=updates"] {
+                display: none !important;
             }
         `;
 
@@ -535,31 +513,6 @@
         });
 
         injectAppButtons();
-    };
-
-    window.showSpinner = function() {
-        let overlay = document.getElementById('update-spinner-overlay');
-
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'update-spinner-overlay';
-
-            overlay.innerHTML = `
-                <div class="spinner"></div>
-                <p>Checking for updates...</p>
-            `;
-
-            document.body.appendChild(overlay);
-        }
-
-        overlay.querySelector('p').textContent = 'Checking for updates...';
-        overlay.style.display = 'flex';
-
-        setTimeout(() => {
-            if (overlay && overlay.querySelector('p')) {
-                overlay.querySelector('p').textContent = 'Downloading updates...';
-            }
-        }, 4000);
     };
 
     window.hideSpinner = function() {

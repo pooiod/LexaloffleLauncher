@@ -13,13 +13,6 @@ import time
 import shutil
 import webbrowser
 from distutils.version import LooseVersion
-import uuid
-import hashlib
-
-# Generate XOR key based on hardware ID
-# To lock user login data per-device
-hw = str(uuid.getnode()).encode()
-XOR_KEY = hashlib.sha256(hw).hexdigest()[:12]
 
 storage_path = os.path.join(os.path.join(os.path.expanduser("~"), "Documents"), 'LexaloffleLauncher')
 if not os.path.isdir(storage_path):
@@ -30,24 +23,6 @@ if getattr(sys, 'frozen', False):
 else:
     APP_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = storage_path
-
-def encode_data(data_dict):
-    if not data_dict:
-        return ""
-    data_json = json.dumps(data_dict).encode('utf-8')
-    xored = bytes([b ^ ord(XOR_KEY[i % len(XOR_KEY)]) for i, b in enumerate(data_json)])
-    return base64.b64encode(xored).decode('utf-8')
-
-def decode_data(encoded_str):
-    if not encoded_str:
-        return None
-    try:
-        xored = base64.b64decode(encoded_str)
-        decoded_bytes = bytes([b ^ ord(XOR_KEY[i % len(XOR_KEY)]) for i, b in enumerate(xored)])
-        return json.loads(decoded_bytes.decode('utf-8'))
-    except Exception:
-        return None
-
 
 def get_app_data_path(app_name, get_dir=False):
     base = os.getenv('APPDATA')
@@ -67,40 +42,56 @@ def get_app_data_path(app_name, get_dir=False):
 
 class Api:
     def save_form_data(self, form_data):
-        encoded_data = encode_data(form_data)
-        path = os.path.join(BASE_DIR, 'dat.bin')
-        with open(path, 'w') as f:
-            f.write(encoded_data)
+        pass
 
     def load_form_data(self):
-        path = os.path.join(BASE_DIR, 'dat.bin')
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                return decode_data(f.read())
         return None
 
     def delete_credentials(self):
-        path = os.path.join(BASE_DIR, 'dat.bin')
-        if os.path.exists(path):
-            os.remove(path)
+        pass
+
+    def get_local_apps(self):
+        apps_dir = os.path.join(BASE_DIR, 'apps')
+        local_apps = []
+        if not os.path.isdir(apps_dir):
+            return []
+
+        for folder_name in os.listdir(apps_dir):
+            app_path = os.path.join(apps_dir, folder_name)
+            if os.path.isdir(app_path):
+                has_exe = any(f.endswith('.exe') for f in os.listdir(app_path))
+                if not has_exe:
+                    continue
+
+                icon_data_uri = None
+                for root, _, files in os.walk(app_path):
+                    png_files = [f for f in files if f.endswith('.png')]
+                    if png_files:
+                        try:
+                            with open(os.path.join(root, png_files[0]), 'rb') as img_file:
+                                encoded = base64.b64encode(img_file.read()).decode('utf-8')
+                                icon_data_uri = f"data:image/png;base64,{encoded}"
+                            break
+                        except Exception:
+                            pass
+
+                display_name = folder_name.replace('-', ' ').replace('_', ' ').title()
+                real_name = [f[:-4] for f in os.listdir(app_path) if f.lower().endswith('.exe')]
+                local_apps.append({'name': display_name, 'icon': icon_data_uri, 'display': real_name})
+        return local_apps
 
     def launch_app(self, app_name):
         app_folder_name = re.split(r'[-\s]', app_name)[0].lower()
         app_dir = os.path.join(BASE_DIR, 'apps', app_folder_name)
 
-        def on_fail():
-            # if 'pico-8' in app_name.lower():
-            #     self.open_in_browser('https://www.pico-8-edu.com/')
-            return False
-
         if not os.path.isdir(app_dir):
-            return on_fail()
+            return False
 
         exe_file = next((f for f in os.listdir(app_dir) if f.endswith('.exe')), None)
         if exe_file:
             subprocess.Popen([os.path.join(app_dir, exe_file)], cwd=app_dir)
             return True
-        return on_fail()
+        return False
 
     def check_for_configs(self, app_names):
         return [name for name in app_names if os.path.exists(get_app_data_path(name))]
@@ -229,86 +220,52 @@ def process_downloads_page(html_content, main_window):
 process_complete_event = threading.Event()
 
 def run_update_check_in_background(main_window):
-    global updater_login_attempted
-    updater_login_attempted = False
-
-    path = os.path.join(BASE_DIR, 'dat.bin')
-    if not os.path.exists(path):
-        return
-
-    with open(path, 'r') as f:
-        saved = decode_data(f.read())
-
-    if not saved:
-        return
+    try:
+        main_window.evaluate_js('showSpinner()')
+    except Exception:
+        pass
 
     try:
-        try:
-            main_window.evaluate_js('showSpinner()')
-        except Exception:
-            pass
-
         def loaded(win):
-            global updater_login_attempted
-
-            if not updater_login_attempted:
-                updater_login_attempted = True
-
-                js = f"""
-                (function() {{
-                    const form = document.querySelector('#account_pulldown_inner > div > form');
-                    const data = {json.dumps(saved)};
-                    const url = 'https://www.lexaloffle.com/games.php?page=updates';
-                    if (form && data) {{
-                        for (const k in data) {{
-                            if (form.elements[k]) form.elements[k].value = data[k];
-                        }}
-                        const go = form.querySelector('input[name="go"]');
-                        if (go) go.value = url;
-                        form.submit();
-                    }}
-                }})();
-                """
-
-                win.evaluate_js(js)
-            else:
-                time.sleep(2)
-                html = win.evaluate_js('document.documentElement.outerHTML')
-                process_downloads_page(html, main_window)
-                win.destroy()
-                process_complete_event.set()
+            time.sleep(2)
+            html = win.evaluate_js('document.documentElement.outerHTML')
+            process_downloads_page(html, main_window)
+            win.destroy()
+            process_complete_event.set()
 
         url = 'https://www.lexaloffle.com/games.php?page=updates'
         w = webview.create_window('Updater', url=url, hidden=True)
         w.events.loaded += lambda: loaded(w)
-
         process_complete_event.wait()
-
     finally:
         try:
             main_window.evaluate_js('hideSpinner()')
-        except Exception:
-            pass
-        try:
             main_window.evaluate_js('window.location.reload()')
         except Exception:
             pass
 
+def check_connectivity(url="https://www.lexaloffle.com", timeout=5):
+    try:
+        requests.get(url, timeout=timeout)
+        return True
+    except (requests.ConnectionError, requests.Timeout):
+        return False
 
 api = Api()
-
-os.makedirs(storage_path, exist_ok=True)
+is_online = check_connectivity()
+start_url = 'https://www.lexaloffle.com' if is_online else 'offline.html'
 
 window = webview.create_window(
     'Lexaloffle Launcher',
-    url='https://www.lexaloffle.com',
+    url=start_url,
     width=1280,
     height=800,
     js_api=api
 )
 
-
 def on_loaded():
+    if not is_online:
+        return
     script = os.path.join(APP_BASE_DIR, 'script.js')
     try:
         with open(script, 'r', encoding='utf-8') as f:
@@ -316,16 +273,16 @@ def on_loaded():
     except FileNotFoundError:
         print(f"CRITICAL ERROR: script.js not found at {script}")
 
-
 window.events.loaded += on_loaded
 
-threading.Timer(
-    2.0,
-    lambda: threading.Thread(
-        target=run_update_check_in_background,
-        args=(window,),
-        daemon=True
+if is_online:
+    threading.Timer(
+        2.0,
+        lambda: threading.Thread(
+            target=run_update_check_in_background,
+            args=(window,),
+            daemon=True
+        ).start()
     ).start()
-).start()
 
-webview.start(debug=False, gui='edgechromium')
+webview.start(debug=False, gui='edgechromium', storage_path=storage_path, private_mode=False)
